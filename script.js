@@ -18,8 +18,10 @@ class HIITTimer {
         // Create audio context for beep sounds
         try {
             this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            this.audioEnabled = false;
         } catch (e) {
             console.log('Audio not supported');
+            this.audioContext = null;
         }
         
         // Enable audio on first user interaction (required for mobile browsers)
@@ -27,35 +29,67 @@ class HIITTimer {
     }
     
     enableAudioOnInteraction() {
-        const enableAudio = () => {
-            if (this.audioContext && this.audioContext.state === 'suspended') {
-                this.audioContext.resume();
+        const enableAudio = async () => {
+            if (this.audioContext) {
+                try {
+                    if (this.audioContext.state === 'suspended') {
+                        await this.audioContext.resume();
+                    }
+                    this.audioEnabled = true;
+                    this.updateAudioStatus();
+                    console.log('Audio enabled');
+                } catch (e) {
+                    console.log('Failed to enable audio:', e);
+                }
             }
+            // Remove listeners after first interaction
             document.removeEventListener('touchstart', enableAudio);
             document.removeEventListener('click', enableAudio);
+            document.removeEventListener('touchend', enableAudio);
         };
         
-        document.addEventListener('touchstart', enableAudio);
-        document.addEventListener('click', enableAudio);
+        // Listen for various interaction types
+        document.addEventListener('touchstart', enableAudio, { once: true });
+        document.addEventListener('click', enableAudio, { once: true });
+        document.addEventListener('touchend', enableAudio, { once: true });
     }
     
     playBeep(frequency = 800, duration = 200) {
-        if (!this.audioContext) return;
+        if (!this.audioContext || !this.audioEnabled) return;
         
-        const oscillator = this.audioContext.createOscillator();
-        const gainNode = this.audioContext.createGain();
-        
-        oscillator.connect(gainNode);
-        gainNode.connect(this.audioContext.destination);
-        
-        oscillator.frequency.value = frequency;
-        oscillator.type = 'sine';
-        
-        gainNode.gain.setValueAtTime(0.3, this.audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + duration / 1000);
-        
-        oscillator.start(this.audioContext.currentTime);
-        oscillator.stop(this.audioContext.currentTime + duration / 1000);
+        try {
+            const oscillator = this.audioContext.createOscillator();
+            const gainNode = this.audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(this.audioContext.destination);
+            
+            oscillator.frequency.value = frequency;
+            oscillator.type = 'sine';
+            
+            // Set volume (lower for mobile)
+            const volume = 0.2;
+            gainNode.gain.setValueAtTime(volume, this.audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + duration / 1000);
+            
+            oscillator.start(this.audioContext.currentTime);
+            oscillator.stop(this.audioContext.currentTime + duration / 1000);
+        } catch (e) {
+            console.log('Failed to play beep:', e);
+        }
+    }
+    
+    updateAudioStatus() {
+        const audioStatus = document.getElementById('audioStatus');
+        if (audioStatus) {
+            if (this.audioEnabled) {
+                audioStatus.textContent = '🔊 Audio enabled';
+                audioStatus.className = 'audio-status audio-enabled';
+            } else {
+                audioStatus.textContent = '🔇 Tap to enable audio';
+                audioStatus.className = 'audio-status';
+            }
+        }
     }
     
     startWorkout() {
@@ -78,6 +112,12 @@ class HIITTimer {
         
         this.resetTimer();
         this.showTimerPanel();
+        
+        // Enable audio on workout start if not already enabled
+        if (this.audioContext && !this.audioEnabled) {
+            this.enableAudioOnInteraction();
+        }
+        
         this.startPhase('prepare', 5); // 5 second preparation
     }
     
@@ -237,6 +277,7 @@ class HIITTimer {
         document.getElementById('skipBtn').style.display = 'inline-block';
         
         this.showConfigPanel();
+        this.updateAudioStatus();
     }
 }
 

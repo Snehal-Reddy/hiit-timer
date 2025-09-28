@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#667eea">
+    <title>Fart Bank's HIIT Timer</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>💨 Fart Bank's 💨<br>HIIT Timer</h1>
+        </header>
+        
+        <main>
+            <!-- Configuration Panel -->
+            <div class="config-panel" id="configPanel">
+                <h2>Configure Your Workout</h2>
+                
+                <div class="config-group">
+                    <label for="cycles">Number of Cycles:</label>
+                    <input type="number" id="cycles" min="1" max="10" value="3">
+                </div>
+                
+                <div class="config-group">
+                    <label for="restPeriod">Rest Period (seconds):</label>
+                    <input type="number" id="restPeriod" min="5" max="300" value="30">
+                </div>
+                
+                <div class="config-group">
+                    <label>Round Durations (seconds):</label>
+                    <div class="rounds-container" id="roundsContainer">
+                        <div class="round-input">
+                            <input type="number" class="round-duration" min="5" max="600" value="90" placeholder="Duration">
+                            <button type="button" class="remove-round" onclick="removeRound(this)">×</button>
+                        </div>
+                        <div class="round-input">
+                            <input type="number" class="round-duration" min="5" max="600" value="60" placeholder="Duration">
+                            <button type="button" class="remove-round" onclick="removeRound(this)">×</button>
+                        </div>
+                        <div class="round-input">
+                            <input type="number" class="round-duration" min="5" max="600" value="45" placeholder="Duration">
+                            <button type="button" class="remove-round" onclick="removeRound(this)">×</button>
+                        </div>
+                        <div class="round-input">
+                            <input type="number" class="round-duration" min="5" max="600" value="30" placeholder="Duration">
+                            <button type="button" class="remove-round" onclick="removeRound(this)">×</button>
+                        </div>
+                    </div>
+                    <button type="button" id="addRound" onclick="addRound()">+ Add Round</button>
+                </div>
+                
+                <button id="startWorkout" onclick="startWorkout()">Start Workout</button>
+            </div>
+            
+            <!-- Timer Display -->
+            <div class="timer-panel" id="timerPanel" style="display: none;">
+                <div class="timer-display">
+                    <div class="current-phase" id="currentPhase">Get Ready!</div>
+                    <div class="time-display" id="timeDisplay">00:00</div>
+                    <div class="progress-info" id="progressInfo">Cycle 1 of 3 • Round 1 of 4</div>
+                </div>
+                
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                
+                <div class="timer-controls">
+                    <button id="pauseBtn" onclick="pauseTimer()">Pause</button>
+                    <button id="skipBtn" onclick="skipPhase()">Skip</button>
+                    <button id="resetBtn" onclick="resetTimer()">Reset</button>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>

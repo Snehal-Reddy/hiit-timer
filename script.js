@@ -1,0 +1,300 @@
+class HIITTimer {
+    constructor() {
+        this.isRunning = false;
+        this.isPaused = false;
+        this.currentTime = 0;
+        this.totalTime = 0;
+        this.currentCycle = 1;
+        this.currentRound = 1;
+        this.currentPhase = 'prepare'; // 'work', 'rest', 'prepare'
+        this.workoutConfig = null;
+        this.intervalId = null;
+        this.audioContext = null;
+        
+        this.initializeAudio();
+    }
+    
+    initializeAudio() {
+        // Create audio context for beep sounds
+        try {
+            this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        } catch (e) {
+            console.log('Audio not supported');
+        }
+        
+        // Enable audio on first user interaction (required for mobile browsers)
+        this.enableAudioOnInteraction();
+    }
+    
+    enableAudioOnInteraction() {
+        const enableAudio = () => {
+            if (this.audioContext && this.audioContext.state === 'suspended') {
+                this.audioContext.resume();
+            }
+            document.removeEventListener('touchstart', enableAudio);
+            document.removeEventListener('click', enableAudio);
+        };
+        
+        document.addEventListener('touchstart', enableAudio);
+        document.addEventListener('click', enableAudio);
+    }
+    
+    playBeep(frequency = 800, duration = 200) {
+        if (!this.audioContext) return;
+        
+        const oscillator = this.audioContext.createOscillator();
+        const gainNode = this.audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(this.audioContext.destination);
+        
+        oscillator.frequency.value = frequency;
+        oscillator.type = 'sine';
+        
+        gainNode.gain.setValueAtTime(0.3, this.audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + duration / 1000);
+        
+        oscillator.start(this.audioContext.currentTime);
+        oscillator.stop(this.audioContext.currentTime + duration / 1000);
+    }
+    
+    startWorkout() {
+        const cycles = parseInt(document.getElementById('cycles').value);
+        const restPeriod = parseInt(document.getElementById('restPeriod').value);
+        const roundDurations = Array.from(document.querySelectorAll('.round-duration'))
+            .map(input => parseInt(input.value))
+            .filter(duration => duration > 0);
+        
+        if (roundDurations.length === 0) {
+            alert('Please add at least one round duration');
+            return;
+        }
+        
+        this.workoutConfig = {
+            cycles,
+            restPeriod,
+            roundDurations
+        };
+        
+        this.resetTimer();
+        this.showTimerPanel();
+        this.startPhase('prepare', 5); // 5 second preparation
+    }
+    
+    showTimerPanel() {
+        document.getElementById('configPanel').style.display = 'none';
+        document.getElementById('timerPanel').style.display = 'block';
+    }
+    
+    showConfigPanel() {
+        document.getElementById('configPanel').style.display = 'block';
+        document.getElementById('timerPanel').style.display = 'none';
+    }
+    
+    startPhase(phase, duration) {
+        this.currentPhase = phase;
+        this.currentTime = duration;
+        this.totalTime = duration;
+        this.isRunning = true;
+        this.isPaused = false;
+        
+        this.updateDisplay();
+        this.startInterval();
+    }
+    
+    startInterval() {
+        this.intervalId = setInterval(() => {
+            if (!this.isPaused) {
+                this.currentTime--;
+                this.updateDisplay();
+                
+                if (this.currentTime <= 0) {
+                    this.playBeep();
+                    this.nextPhase();
+                } else if (this.currentTime <= 3) {
+                    this.playBeep(600, 100);
+                }
+            }
+        }, 1000);
+    }
+    
+    nextPhase() {
+        clearInterval(this.intervalId);
+        
+        if (this.currentPhase === 'prepare') {
+            this.startWorkPhase();
+        } else if (this.currentPhase === 'work') {
+            if (this.currentRound < this.workoutConfig.roundDurations.length) {
+                this.startRestPhase();
+            } else {
+                this.nextCycle();
+            }
+        } else if (this.currentPhase === 'rest') {
+            this.currentRound++;
+            this.startWorkPhase();
+        }
+    }
+    
+    startWorkPhase() {
+        const duration = this.workoutConfig.roundDurations[this.currentRound - 1];
+        this.startPhase('work', duration);
+    }
+    
+    startRestPhase() {
+        this.startPhase('rest', this.workoutConfig.restPeriod);
+    }
+    
+    nextCycle() {
+        if (this.currentCycle < this.workoutConfig.cycles) {
+            this.currentCycle++;
+            this.currentRound = 1;
+            this.startRestPhase(); // Rest between cycles
+        } else {
+            this.completeWorkout();
+        }
+    }
+    
+    completeWorkout() {
+        this.isRunning = false;
+        this.playBeep(1000, 500);
+        this.playBeep(1000, 500);
+        this.playBeep(1000, 500);
+        
+        document.getElementById('currentPhase').textContent = 'Workout Complete! 🎉';
+        document.getElementById('currentPhase').className = 'current-phase prepare-phase';
+        document.getElementById('timeDisplay').textContent = '00:00';
+        document.getElementById('progressInfo').textContent = 'Great job!';
+        document.getElementById('progressFill').style.width = '100%';
+        
+        // Hide controls except reset
+        document.getElementById('pauseBtn').style.display = 'none';
+        document.getElementById('skipBtn').style.display = 'none';
+    }
+    
+    updateDisplay() {
+        const minutes = Math.floor(this.currentTime / 60);
+        const seconds = this.currentTime % 60;
+        const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        
+        document.getElementById('timeDisplay').textContent = timeString;
+        
+        // Update phase display
+        const phaseElement = document.getElementById('currentPhase');
+        const progressElement = document.getElementById('progressInfo');
+        
+        if (this.currentPhase === 'prepare') {
+            phaseElement.textContent = 'Get Ready!';
+            phaseElement.className = 'current-phase prepare-phase';
+            progressElement.textContent = 'Starting in...';
+        } else if (this.currentPhase === 'work') {
+            phaseElement.textContent = 'WORK!';
+            phaseElement.className = 'current-phase work-phase';
+            progressElement.textContent = `Cycle ${this.currentCycle} of ${this.workoutConfig.cycles} • Round ${this.currentRound} of ${this.workoutConfig.roundDurations.length}`;
+        } else if (this.currentPhase === 'rest') {
+            phaseElement.textContent = 'REST';
+            phaseElement.className = 'current-phase rest-phase';
+            progressElement.textContent = `Cycle ${this.currentCycle} of ${this.workoutConfig.cycles} • Round ${this.currentRound} of ${this.workoutConfig.roundDurations.length}`;
+        }
+        
+        // Update progress bar
+        const progress = ((this.totalTime - this.currentTime) / this.totalTime) * 100;
+        document.getElementById('progressFill').style.width = `${progress}%`;
+    }
+    
+    pauseTimer() {
+        this.isPaused = !this.isPaused;
+        const pauseBtn = document.getElementById('pauseBtn');
+        pauseBtn.textContent = this.isPaused ? 'Resume' : 'Pause';
+    }
+    
+    skipPhase() {
+        if (this.isRunning) {
+            this.playBeep();
+            this.nextPhase();
+        }
+    }
+    
+    resetTimer() {
+        clearInterval(this.intervalId);
+        this.isRunning = false;
+        this.isPaused = false;
+        this.currentTime = 0;
+        this.totalTime = 0;
+        this.currentCycle = 1;
+        this.currentRound = 1;
+        this.currentPhase = 'prepare';
+        
+        // Reset display
+        document.getElementById('timeDisplay').textContent = '00:00';
+        document.getElementById('currentPhase').textContent = 'Get Ready!';
+        document.getElementById('currentPhase').className = 'current-phase prepare-phase';
+        document.getElementById('progressInfo').textContent = 'Cycle 1 of 1 • Round 1 of 1';
+        document.getElementById('progressFill').style.width = '0%';
+        
+        // Reset controls
+        document.getElementById('pauseBtn').textContent = 'Pause';
+        document.getElementById('pauseBtn').style.display = 'inline-block';
+        document.getElementById('skipBtn').style.display = 'inline-block';
+        
+        this.showConfigPanel();
+    }
+}
+
+// Global timer instance
+const timer = new HIITTimer();
+
+// Set random background image on page load
+function setRandomBackground() {
+    const images = [
+        'images/IMG_4281.jpeg',
+        'images/IMG_4282.jpeg',
+        'images/IMG_4285.jpeg',
+        'images/IMG_4286.jpeg',
+        'images/IMG_4287.jpeg',
+        'images/IMG_4288.jpeg',
+        'images/IMG_4289.jpeg'
+    ];
+    
+    const randomImage = images[Math.floor(Math.random() * images.length)];
+    document.body.style.setProperty('--bg-image', `url('${randomImage}')`);
+}
+
+// Initialize random background when page loads
+document.addEventListener('DOMContentLoaded', setRandomBackground);
+
+// Global functions for HTML onclick handlers
+function startWorkout() {
+    timer.startWorkout();
+}
+
+function pauseTimer() {
+    timer.pauseTimer();
+}
+
+function skipPhase() {
+    timer.skipPhase();
+}
+
+function resetTimer() {
+    timer.resetTimer();
+}
+
+function addRound() {
+    const container = document.getElementById('roundsContainer');
+    const roundInput = document.createElement('div');
+    roundInput.className = 'round-input';
+    roundInput.innerHTML = `
+        <input type="number" class="round-duration" min="5" max="600" value="30" placeholder="Duration">
+        <button type="button" class="remove-round" onclick="removeRound(this)">×</button>
+    `;
+    container.appendChild(roundInput);
+}
+
+function removeRound(button) {
+    const container = document.getElementById('roundsContainer');
+    if (container.children.length > 1) {
+        button.parentElement.remove();
+    } else {
+        alert('You need at least one round');
+    }
+}

@@ -1,0 +1,357 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.7) 0%, rgba(118, 75, 162, 0.7) 100%);
+    min-height: 100vh;
+    color: #333;
+    position: relative;
+}
+
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: var(--bg-image, url('images/IMG_4281.jpeg'));
+    background-size: 150px auto;
+    background-position: 0 0;
+    background-repeat: repeat;
+    z-index: -1;
+    opacity: 0.3;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+header h1 {
+    color: white;
+    font-size: 2.5rem;
+    font-weight: 300;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.8), 0 0 20px rgba(0,0,0,0.5);
+    background: rgba(0,0,0,0.3);
+    padding: 15px 25px;
+    border-radius: 15px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.config-panel, .timer-panel {
+    background: white;
+    border-radius: 15px;
+    padding: 30px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    margin-bottom: 20px;
+}
+
+.config-panel h2 {
+    margin-bottom: 25px;
+    color: #333;
+    font-weight: 400;
+}
+
+.config-group {
+    margin-bottom: 20px;
+}
+
+.config-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #555;
+}
+
+.config-group input[type="number"] {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e1e5e9;
+    border-radius: 8px;
+    font-size: 16px;
+    transition: border-color 0.3s ease;
+}
+
+.config-group input[type="number"]:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.rounds-container {
+    margin-bottom: 15px;
+}
+
+.round-input {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+    gap: 10px;
+}
+
+.round-input input {
+    flex: 1;
+}
+
+.remove-round {
+    background: #ff4757;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.3s ease;
+}
+
+.remove-round:hover {
+    background: #ff3742;
+}
+
+#addRound {
+    background: #2ed573;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s ease;
+}
+
+#addRound:hover {
+    background: #26d065;
+}
+
+button {
+    background: #667eea;
+    color: white;
+    border: none;
+    padding: 15px 30px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+button:hover {
+    background: #5a6fd8;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+#startWorkout {
+    width: 100%;
+    margin-top: 20px;
+    font-size: 18px;
+    padding: 18px;
+}
+
+.timer-display {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.current-phase {
+    font-size: 1.5rem;
+    color: #667eea;
+    margin-bottom: 15px;
+    font-weight: 500;
+}
+
+.time-display {
+    font-size: 4rem;
+    font-weight: 300;
+    color: #333;
+    margin-bottom: 10px;
+    font-family: 'Courier New', monospace;
+}
+
+.progress-info {
+    color: #666;
+    font-size: 1rem;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background: #e1e5e9;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 30px;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+    width: 0%;
+    transition: width 0.3s ease;
+}
+
+.timer-controls {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+}
+
+.timer-controls button {
+    flex: 1;
+    max-width: 120px;
+}
+
+#pauseBtn {
+    background: #ffa502;
+}
+
+#pauseBtn:hover {
+    background: #ff9500;
+}
+
+#skipBtn {
+    background: #2ed573;
+}
+
+#skipBtn:hover {
+    background: #26d065;
+}
+
+#resetBtn {
+    background: #ff4757;
+}
+
+#resetBtn:hover {
+    background: #ff3742;
+}
+
+.work-phase {
+    color: #ff4757;
+}
+
+.rest-phase {
+    color: #2ed573;
+}
+
+.prepare-phase {
+    color: #ffa502;
+}
+
+/* Mobile-first responsive design */
+@media (max-width: 768px) {
+    .container {
+        padding: 10px;
+    }
+    
+    .config-panel, .timer-panel {
+        padding: 20px;
+        margin-bottom: 15px;
+    }
+    
+    header h1 {
+        font-size: 2rem;
+        margin-bottom: 20px;
+    }
+    
+    .time-display {
+        font-size: 3.5rem;
+        margin-bottom: 15px;
+    }
+    
+    .current-phase {
+        font-size: 1.3rem;
+        margin-bottom: 10px;
+    }
+    
+    .progress-info {
+        font-size: 0.9rem;
+    }
+    
+    .timer-controls {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .timer-controls button {
+        max-width: none;
+        padding: 18px;
+        font-size: 18px;
+        min-height: 50px;
+    }
+    
+    .config-group input[type="number"] {
+        padding: 15px;
+        font-size: 18px;
+        min-height: 50px;
+    }
+    
+    .round-input {
+        margin-bottom: 15px;
+    }
+    
+    .round-input input {
+        padding: 15px;
+        font-size: 18px;
+        min-height: 50px;
+    }
+    
+    .remove-round {
+        width: 40px;
+        height: 40px;
+        font-size: 20px;
+    }
+    
+    #addRound {
+        padding: 15px 25px;
+        font-size: 16px;
+        min-height: 50px;
+    }
+    
+    #startWorkout {
+        padding: 20px;
+        font-size: 20px;
+        min-height: 60px;
+    }
+    
+    .config-group label {
+        font-size: 16px;
+        margin-bottom: 10px;
+    }
+    
+    .config-panel h2 {
+        font-size: 1.5rem;
+        margin-bottom: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .time-display {
+        font-size: 3rem;
+    }
+    
+    .current-phase {
+        font-size: 1.2rem;
+    }
+    
+    .config-panel, .timer-panel {
+        padding: 15px;
+    }
+    
+    header h1 {
+        font-size: 1.8rem;
+    }
+}

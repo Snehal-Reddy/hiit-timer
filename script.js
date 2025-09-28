@@ -19,6 +19,13 @@ class HIITTimer {
         try {
             this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
             this.audioEnabled = false;
+            
+            // Safari-specific: Check if we're in Safari
+            this.isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+            
+            if (this.isSafari) {
+                console.log('Safari detected - using enhanced audio handling');
+            }
         } catch (e) {
             console.log('Audio not supported');
             this.audioContext = null;
@@ -32,9 +39,30 @@ class HIITTimer {
         const enableAudio = async () => {
             if (this.audioContext) {
                 try {
+                    // Safari-specific: Create a silent buffer to unlock audio
+                    if (this.isSafari) {
+                        const buffer = this.audioContext.createBuffer(1, 1, 22050);
+                        const source = this.audioContext.createBufferSource();
+                        source.buffer = buffer;
+                        source.connect(this.audioContext.destination);
+                        source.start(0);
+                    }
+                    
                     if (this.audioContext.state === 'suspended') {
                         await this.audioContext.resume();
                     }
+                    
+                    // Safari-specific: Additional resume attempt
+                    if (this.isSafari && this.audioContext.state === 'suspended') {
+                        setTimeout(async () => {
+                            try {
+                                await this.audioContext.resume();
+                            } catch (e) {
+                                console.log('Safari audio resume failed:', e);
+                            }
+                        }, 100);
+                    }
+                    
                     this.audioEnabled = true;
                     this.updateAudioStatus();
                     console.log('Audio enabled');
@@ -58,6 +86,24 @@ class HIITTimer {
         if (!this.audioContext || !this.audioEnabled) return;
         
         try {
+            // Safari-specific: Ensure audio context is running
+            if (this.isSafari && this.audioContext.state === 'suspended') {
+                this.audioContext.resume().then(() => {
+                    this.playBeepSound(frequency, duration);
+                }).catch(e => {
+                    console.log('Safari audio resume failed:', e);
+                });
+                return;
+            }
+            
+            this.playBeepSound(frequency, duration);
+        } catch (e) {
+            console.log('Failed to play beep:', e);
+        }
+    }
+    
+    playBeepSound(frequency = 800, duration = 200) {
+        try {
             const oscillator = this.audioContext.createOscillator();
             const gainNode = this.audioContext.createGain();
             
@@ -67,26 +113,35 @@ class HIITTimer {
             oscillator.frequency.value = frequency;
             oscillator.type = 'sine';
             
-            // Set volume (lower for mobile)
-            const volume = 0.2;
+            // Set volume (higher for Safari, lower for mobile)
+            const volume = this.isSafari ? 0.4 : 0.2;
             gainNode.gain.setValueAtTime(volume, this.audioContext.currentTime);
             gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + duration / 1000);
             
             oscillator.start(this.audioContext.currentTime);
             oscillator.stop(this.audioContext.currentTime + duration / 1000);
         } catch (e) {
-            console.log('Failed to play beep:', e);
+            console.log('Failed to play beep sound:', e);
         }
     }
     
     updateAudioStatus() {
         const audioStatus = document.getElementById('audioStatus');
+        const testAudioBtn = document.getElementById('testAudio');
+        
         if (audioStatus) {
             if (this.audioEnabled) {
                 audioStatus.textContent = '🔊 Audio enabled';
                 audioStatus.className = 'audio-status audio-enabled';
+                if (testAudioBtn) testAudioBtn.style.display = 'none';
             } else {
-                audioStatus.textContent = '🔇 Tap to enable audio';
+                if (this.isSafari) {
+                    audioStatus.textContent = '🔇 Safari: Tap "Test Audio" to enable';
+                    if (testAudioBtn) testAudioBtn.style.display = 'inline-block';
+                } else {
+                    audioStatus.textContent = '🔇 Tap to enable audio';
+                    if (testAudioBtn) testAudioBtn.style.display = 'none';
+                }
                 audioStatus.className = 'audio-status';
             }
         }
@@ -337,5 +392,19 @@ function removeRound(button) {
         button.parentElement.remove();
     } else {
         alert('You need at least one round');
+    }
+}
+
+function testAudio() {
+    if (timer.audioContext && !timer.audioEnabled) {
+        // Force enable audio for Safari
+        timer.enableAudioOnInteraction();
+        // Play a test beep
+        setTimeout(() => {
+            timer.playBeep(600, 300);
+        }, 100);
+    } else if (timer.audioEnabled) {
+        // Play a test beep
+        timer.playBeep(600, 300);
     }
 }

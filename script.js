@@ -273,11 +273,14 @@ class HIITTimer {
         const seconds = this.currentTime % 60;
         const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
         
-        document.getElementById('timeDisplay').textContent = timeString;
+        const timeDisplay = document.getElementById('timeDisplay');
+        timeDisplay.textContent = timeString;
+        timeDisplay.setAttribute('aria-label', `${minutes} minutes and ${seconds} seconds remaining`);
         
         // Update phase display
         const phaseElement = document.getElementById('currentPhase');
         const progressElement = document.getElementById('progressInfo');
+        const progressBar = document.querySelector('.progress-bar');
         
         if (this.currentPhase === 'prepare') {
             phaseElement.textContent = 'Get Ready!';
@@ -296,6 +299,7 @@ class HIITTimer {
         // Update progress bar
         const progress = ((this.totalTime - this.currentTime) / this.totalTime) * 100;
         document.getElementById('progressFill').style.width = `${progress}%`;
+        progressBar.setAttribute('aria-valuenow', Math.round(progress));
     }
     
     pauseTimer() {
@@ -379,11 +383,12 @@ function resetTimer() {
 
 function addRound() {
     const container = document.getElementById('roundsContainer');
+    const roundCount = container.children.length + 1;
     const roundInput = document.createElement('div');
     roundInput.className = 'round-input';
     roundInput.innerHTML = `
-        <input type="number" class="round-duration" min="5" max="600" value="30" placeholder="Duration">
-        <button type="button" class="remove-round" onclick="removeRound(this)">×</button>
+        <input type="number" class="round-duration" min="5" max="600" value="30" placeholder="Duration" aria-label="Round ${roundCount} duration in seconds">
+        <button type="button" class="remove-round" onclick="removeRound(this)" aria-label="Remove round ${roundCount}">×</button>
     `;
     container.appendChild(roundInput);
 }
@@ -424,4 +429,26 @@ function updateConfigAudioStatus() {
             configAudioStatus.className = 'audio-status';
         }
     }
+}
+
+// Social Sharing Functions
+function shareOnTwitter() {
+    const text = "Check out this free HIIT timer for high intensity interval training workouts! Perfect for Tabata, circuit training, and HIIT exercises. No registration required!";
+    const url = "https://hiit-timer.co.uk";
+    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}&hashtags=HIIT,WorkoutTimer,Tabata,Fitness`;
+    window.open(twitterUrl, '_blank', 'width=600,height=400');
+}
+
+function shareOnFacebook() {
+    const url = "https://hiit-timer.co.uk";
+    const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+    window.open(facebookUrl, '_blank', 'width=600,height=400');
+}
+
+function shareOnLinkedIn() {
+    const url = "https://hiit-timer.co.uk";
+    const title = "Free HIIT Timer - High Intensity Interval Training Timer";
+    const summary = "Free online HIIT timer for high intensity interval training workouts. Customizable workout cycles, rest periods, and round durations.";
+    const linkedinUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}&title=${encodeURIComponent(title)}&summary=${encodeURIComponent(summary)}`;
+    window.open(linkedinUrl, '_blank', 'width=600,height=400');
 }

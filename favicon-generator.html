@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Favicon Generator for HIIT Timer</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .favicon-preview { display: inline-block; margin: 10px; text-align: center; }
+        canvas { border: 1px solid #ccc; margin: 5px; }
+    </style>
+</head>
+<body>
+    <h1>HIIT Timer Favicon Generator</h1>
+    <p>This page generates favicon files for the HIIT timer. Right-click and save the images below.</p>
+    
+    <div class="favicon-preview">
+        <h3>16x16 Favicon</h3>
+        <canvas id="favicon16" width="16" height="16"></canvas>
+    </div>
+    
+    <div class="favicon-preview">
+        <h3>32x32 Favicon</h3>
+        <canvas id="favicon32" width="32" height="32"></canvas>
+    </div>
+    
+    <div class="favicon-preview">
+        <h3>180x180 Apple Touch Icon</h3>
+        <canvas id="appleIcon" width="180" height="180"></canvas>
+    </div>
+    
+    <div class="favicon-preview">
+        <h3>150x150 Microsoft Tile</h3>
+        <canvas id="msTile" width="150" height="150"></canvas>
+    </div>
+
+    <script>
+        function createFavicon(canvasId, size) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+            
+            // Background gradient
+            const gradient = ctx.createLinearGradient(0, 0, size, size);
+            gradient.addColorStop(0, '#667eea');
+            gradient.addColorStop(1, '#764ba2');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, size, size);
+            
+            // Timer icon (simplified)
+            ctx.fillStyle = 'white';
+            ctx.font = `${size * 0.6}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('⏱', size/2, size/2);
+        }
+        
+        // Generate all favicons
+        createFavicon('favicon16', 16);
+        createFavicon('favicon32', 32);
+        createFavicon('appleIcon', 180);
+        createFavicon('msTile', 150);
+    </script>
+</body>
+</html>

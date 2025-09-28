@@ -1,0 +1,29 @@
+{
+    "name": "HIIT Timer - High Intensity Interval Training Timer",
+    "short_name": "HIIT Timer",
+    "description": "Free online HIIT timer for high intensity interval training workouts. Customizable workout cycles, rest periods, and round durations.",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#667eea",
+    "theme_color": "#667eea",
+    "orientation": "portrait-primary",
+    "icons": [
+        {
+            "src": "/favicon-16x16.png",
+            "sizes": "16x16",
+            "type": "image/png"
+        },
+        {
+            "src": "/favicon-32x32.png",
+            "sizes": "32x32",
+            "type": "image/png"
+        },
+        {
+            "src": "/apple-touch-icon.png",
+            "sizes": "180x180",
+            "type": "image/png"
+        }
+    ],
+    "categories": ["health", "fitness", "sports"],
+    "lang": "en-GB"
+}

@@ -54,6 +54,12 @@
                 </div>
                 
                 <button id="startWorkout" onclick="startWorkout()">Start Workout</button>
+                
+                <!-- Audio Test Button -->
+                <div style="margin-top: 20px; text-align: center;">
+                    <button id="configTestAudio" onclick="testAudio()" style="padding: 10px 20px; font-size: 16px; background: #ffa502; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">🔊 Test Audio</button>
+                    <div class="audio-status" id="configAudioStatus" style="margin-top: 10px;">🔇 Audio not enabled</div>
+                </div>
             </div>
             
             <!-- Timer Display -->
@@ -63,7 +69,7 @@
                     <div class="time-display" id="timeDisplay">00:00</div>
                     <div class="progress-info" id="progressInfo">Cycle 1 of 3 • Round 1 of 4</div>
                     <div class="audio-status" id="audioStatus">🔇 Tap to enable audio</div>
-                    <button id="testAudio" onclick="testAudio()" style="display: none; margin-top: 10px; padding: 8px 16px; font-size: 14px; background: #ffa502; color: white; border: none; border-radius: 8px; cursor: pointer;">🔊 Test Audio</button>
+                    <button id="testAudio" onclick="testAudio()" style="margin-top: 10px; padding: 10px 20px; font-size: 16px; background: #ffa502; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">🔊 Test Audio</button>
                 </div>
                 
                 <div class="progress-bar">

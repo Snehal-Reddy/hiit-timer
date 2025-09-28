@@ -133,18 +133,20 @@ class HIITTimer {
             if (this.audioEnabled) {
                 audioStatus.textContent = '🔊 Audio enabled';
                 audioStatus.className = 'audio-status audio-enabled';
-                if (testAudioBtn) testAudioBtn.style.display = 'none';
+                if (testAudioBtn) testAudioBtn.style.display = 'inline-block';
             } else {
                 if (this.isSafari) {
                     audioStatus.textContent = '🔇 Safari: Tap "Test Audio" to enable';
-                    if (testAudioBtn) testAudioBtn.style.display = 'inline-block';
                 } else {
-                    audioStatus.textContent = '🔇 Tap to enable audio';
-                    if (testAudioBtn) testAudioBtn.style.display = 'none';
+                    audioStatus.textContent = '🔇 Tap "Test Audio" to enable';
                 }
                 audioStatus.className = 'audio-status';
+                if (testAudioBtn) testAudioBtn.style.display = 'inline-block';
             }
         }
+        
+        // Also update config panel status
+        updateConfigAudioStatus();
     }
     
     startWorkout() {
@@ -402,9 +404,24 @@ function testAudio() {
         // Play a test beep
         setTimeout(() => {
             timer.playBeep(600, 300);
+            updateConfigAudioStatus();
         }, 100);
     } else if (timer.audioEnabled) {
         // Play a test beep
         timer.playBeep(600, 300);
+        updateConfigAudioStatus();
+    }
+}
+
+function updateConfigAudioStatus() {
+    const configAudioStatus = document.getElementById('configAudioStatus');
+    if (configAudioStatus) {
+        if (timer.audioEnabled) {
+            configAudioStatus.textContent = '🔊 Audio enabled';
+            configAudioStatus.className = 'audio-status audio-enabled';
+        } else {
+            configAudioStatus.textContent = '🔇 Audio not enabled';
+            configAudioStatus.className = 'audio-status';
+        }
     }
 }

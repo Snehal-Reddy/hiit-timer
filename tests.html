@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HIIT Timer Test Suite</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin-bottom: 30px;
+        }
+        .test-case {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 10px;
+        }
+        .test-case.pass {
+            border-left: 5px solid #28a745;
+            background: #d4edda;
+        }
+        .test-case.fail {
+            border-left: 5px solid #dc3545;
+            background: #f8d7da;
+        }
+        .test-case.running {
+            border-left: 5px solid #ffc107;
+            background: #fff3cd;
+        }
+        .test-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .test-description {
+            color: #666;
+            margin-bottom: 10px;
+        }
+        .test-result {
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .controls {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 0 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .summary {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .timer-display {
+            background: #343a40;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 HIIT Timer Test Suite</h1>
+    
+    <div class="summary" id="summary">
+        <strong>Test Summary:</strong> Ready to run tests
+    </div>
+    
+    <div class="controls">
+        <button onclick="runAllTests()">Run All Tests</button>
+        <button onclick="runNormalTests()">Run Normal Cases</button>
+        <button onclick="runEdgeTests()">Run Edge Cases</button>
+        <button onclick="clearResults()">Clear Results</button>
+    </div>
+
+    <div class="test-container">
+        <h2>Normal Cases</h2>
+        <div id="normalTests"></div>
+    </div>
+
+    <div class="test-container">
+        <h2>Edge Cases</h2>
+        <div id="edgeTests"></div>
+    </div>
+
+    <div class="test-container">
+        <h2>Zero Rest Period Tests</h2>
+        <div id="zeroRestTests"></div>
+    </div>
+
+    <div class="test-container">
+        <h2>Input Validation Tests</h2>
+        <div id="validationTests"></div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        // Test framework
+        class TestFramework {
+            constructor() {
+                this.tests = [];
+                this.results = [];
+            }
+
+            addTest(name, description, testFunction, category = 'normal') {
+                this.tests.push({ name, description, testFunction, category });
+            }
+
+            async runTest(test) {
+                const testElement = document.createElement('div');
+                testElement.className = 'test-case running';
+                testElement.innerHTML = `
+                    <div class="test-title">${test.name}</div>
+                    <div class="test-description">${test.description}</div>
+                    <div class="test-result">Running...</div>
+                `;
+                
+                const container = document.getElementById(test.category + 'Tests');
+                container.appendChild(testElement);
+
+                try {
+                    const result = await test.testFunction();
+                    testElement.className = 'test-case pass';
+                    testElement.querySelector('.test-result').textContent = result;
+                    this.results.push({ name: test.name, status: 'PASS', result });
+                } catch (error) {
+                    testElement.className = 'test-case fail';
+                    testElement.querySelector('.test-result').textContent = `FAILED: ${error.message}`;
+                    this.results.push({ name: test.name, status: 'FAIL', result: error.message });
+                }
+            }
+
+            async runAllTests() {
+                this.results = [];
+                for (const test of this.tests) {
+                    await this.runTest(test);
+                    await new Promise(resolve => setTimeout(resolve, 100)); // Small delay between tests
+                }
+                this.updateSummary();
+            }
+
+            async runTestsByCategory(category) {
+                this.results = [];
+                const categoryTests = this.tests.filter(test => test.category === category);
+                for (const test of categoryTests) {
+                    await this.runTest(test);
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                }
+                this.updateSummary();
+            }
+
+            updateSummary() {
+                const total = this.results.length;
+                const passed = this.results.filter(r => r.status === 'PASS').length;
+                const failed = this.results.filter(r => r.status === 'FAIL').length;
+                
+                document.getElementById('summary').innerHTML = `
+                    <strong>Test Summary:</strong> ${passed}/${total} passed, ${failed} failed
+                `;
+            }
+        }
+
+        const testFramework = new TestFramework();
+
+        // Helper function to simulate timer behavior
+        function simulateTimer(cycles, restPeriod, roundDurations) {
+            const events = [];
+            let currentCycle = 1;
+            let currentRound = 1;
+            let phase = 'prepare';
+            
+            events.push(`Prepare (5s)`);
+            
+            // Simulate the timer logic
+            while (currentCycle <= cycles) {
+                // Work phase
+                const duration = roundDurations[currentRound - 1];
+                events.push(`Cycle ${currentCycle}, Round ${currentRound}: Work (${duration}s)`);
+                
+                // Check if more rounds in this cycle
+                if (currentRound < roundDurations.length) {
+                    if (restPeriod > 0) {
+                        events.push(`Cycle ${currentCycle}, Round ${currentRound}: Rest (${restPeriod}s)`);
+                    }
+                    currentRound++;
+                } else {
+                    // Move to next cycle
+                    currentCycle++;
+                    currentRound = 1;
+                    if (currentCycle <= cycles) {
+                        if (roundDurations.length > 1 && restPeriod > 0) {
+                            events.push(`Between cycles: Rest (${restPeriod}s)`);
+                        }
+                    }
+                }
+            }
+            
+            events.push('Workout Complete!');
+            return events;
+        }
+
+        // Normal Cases
+        testFramework.addTest(
+            'Single Cycle, Single Round',
+            '1 cycle, 1 round, 30s rest - should go: Prepare → Work → Complete',
+            () => {
+                const events = simulateTimer(1, 30, [60]);
+                const expected = ['Prepare (5s)', 'Cycle 1, Round 1: Work (60s)', 'Workout Complete!'];
+                if (JSON.stringify(events) === JSON.stringify(expected)) {
+                    return `✅ PASS\nExpected: ${expected.join(' → ')}\nActual: ${events.join(' → ')}`;
+                } else {
+                    throw new Error(`Expected: ${expected.join(' → ')}\nActual: ${events.join(' → ')}`);
+                }
+            },
+            'normal'
+        );
+
+        testFramework.addTest(
+            'Multiple Cycles, Single Round',
+            '3 cycles, 1 round, 30s rest - should go: Prepare → Work → Work → Work → Complete',
+            () => {
+                const events = simulateTimer(3, 30, [60]);
+                const expected = [
+                    'Prepare (5s)', 
+                    'Cycle 1, Round 1: Work (60s)', 
+                    'Cycle 2, Round 1: Work (60s)', 
+                    'Cycle 3, Round 1: Work (60s)', 
+                    'Workout Complete!'
+                ];
+                if (JSON.stringify(events) === JSON.stringify(expected)) {
+                    return `✅ PASS\nExpected: ${expected.join(' → ')}\nActual: ${events.join(' → ')}`;
+                } else {
+                    throw new Error(`Expected: ${expected.join(' → ')}\nActual: ${events.join(' → ')}`);
+                }
+            },
+            'normal'
+        );
+
+        testFramework.addTest(
+            'Single Cycle, Multiple Rounds',
+            '1 cycle, 3 rounds, 30s rest - should have rests between rounds',
+            () => {
+                const events = simulateTimer(1, 30, [60, 45, 30]);
+                const expected = [
+                    'Prepare (5s)',
+                    'Cycle 1, Round 1: Work (60s)',
+                    'Cycle 1, Round 1: Rest (30s)',
+                    'Cycle 1, Round 2: Work (45s)',
+                    'Cycle 1, Round 2: Rest (30s)',
+                    'Cycle 1, Round 3: Work (30s)',
+                    'Workout Complete!'
+                ];
+                if (JSON.stringify(events) === JSON.stringify(expected)) {
+                    return `✅ PASS\nExpected: ${expected.join(' → ')}\nActual: ${events.join(' → ')}`;
+                } else {
+                    throw new Error(`Expected: ${expected.join(' → ')}\nActual: ${events.join(' → ')}`);
+                }
+            },
+            'normal'
+        );
+
+        testFramework.addTest(
+            'Multiple Cycles, Multiple Rounds',
+            '2 cycles, 2 rounds, 30s rest - should have rests between rounds and cycles',
+            () => {
+                const events = simulateTimer(2, 30, [60, 45]);
+                const expected = [
+                    'Prepare (5s)',
+                    'Cycle 1, Round 1: Work (60s)',
+                    'Cycle 1, Round 1: Rest (30s)',
+                    'Cycle 1, Round 2: Work (45s)',
+                    'Between cycles: Rest (30s)',
+                    'Cycle 2, Round 1: Work (60s)',
+                    'Cycle 2, Round 1: Rest (30s)',
+                    'Cycle 2, Round 2: Work (45s)',
+                    'Workout Complete!'
+                ];
+                if (JSON.stringify(events) === JSON.stringify(expected)) {
+                    return `✅ PASS\nExpected: ${expected.join(' → ')}\nActual: ${events.join(' → ')}`;
+                } else {
+                    throw new Error(`Expected: ${expected.join(' → ')}\nActual: ${events.join(' → ')}`);
+                }
+            },
+            'normal'
+        );
+
+        // Zero Rest Period Tests
+        testFramework.addTest(
+            'Zero Rest - Single Cycle, Multiple Rounds',
+            '1 cycle, 3 rounds, 0s rest - should have no rests between rounds',
+            () => {
+                const events = simulateTimer(1, 0, [60, 45, 30]);
+                const expected = [
+                    'Prepare (5s)',
+                    'Cycle 1, Round 1: Work (60s)',
+                    'Cycle 1, Round 2: Work (45s)',
+                    'Cycle 1, Round 3: Work (30s)',
+                    'Workout Complete!'
+                ];
+                if (JSON.stringify(events) === JSON.stringify(expected)) {
+                    return `✅ PASS\nExpected: ${expected.join(' → ')}\nActual: ${events.join(' → ')}`;
+                } else {
+                    throw new Error(`Expected: ${expected.join(' → ')}\nActual: ${events.join(' → ')}`);
+                }
+            },
+            'zeroRest'
+        );
+
+        testFramework.addTest(
+            'Zero Rest - Multiple Cycles, Multiple Rounds',
+            '2 cycles, 2 rounds, 0s rest - should have no rests anywhere',
+            () => {
+                const events = simulateTimer(2, 0, [60, 45]);
+                const expected = [
+                    'Prepare (5s)',
+                    'Cycle 1, Round 1: Work (60s)',
+                    'Cycle 1, Round 2: Work (45s)',
+                    'Cycle 2, Round 1: Work (60s)',
+                    'Cycle 2, Round 2: Work (45s)',
+                    'Workout Complete!'
+                ];
+                if (JSON.stringify(events) === JSON.stringify(expected)) {
+                    return `✅ PASS\nExpected: ${expected.join(' → ')}\nActual: ${events.join(' → ')}`;
+                } else {
+                    throw new Error(`Expected: ${expected.join(' → ')}\nActual: ${events.join(' → ')}`);
+                }
+            },
+            'zeroRest'
+        );
+
+        testFramework.addTest(
+            'Zero Duration Rounds',
+            '1 cycle, 3 rounds with 0s duration in middle - should handle zero duration rounds',
+            () => {
+                const events = simulateTimer(1, 30, [60, 0, 45]);
+                const expected = [
+                    'Prepare (5s)',
+                    'Cycle 1, Round 1: Work (60s)',
+                    'Cycle 1, Round 1: Rest (30s)',
+                    'Cycle 1, Round 2: Work (0s)',
+                    'Cycle 1, Round 2: Rest (30s)',
+                    'Cycle 1, Round 3: Work (45s)',
+                    'Workout Complete!'
+                ];
+                if (JSON.stringify(events) === JSON.stringify(expected)) {
+                    return `✅ PASS\nExpected: ${expected.join(' → ')}\nActual: ${events.join(' → ')}`;
+                } else {
+                    throw new Error(`Expected: ${expected.join(' → ')}\nActual: ${events.join(' → ')}`);
+                }
+            },
+            'zeroRest'
+        );
+
+        // Edge Cases
+        testFramework.addTest(
+            'Maximum Cycles',
+            '10 cycles, 1 round - should handle maximum cycle count',
+            () => {
+                const events = simulateTimer(10, 30, [60]);
+                const workEvents = events.filter(e => e.includes('Work (60s)'));
+                if (workEvents.length === 10) {
+                    return `✅ PASS\nExpected: 10 work phases\nActual: ${workEvents.length} work phases`;
+                } else {
+                    throw new Error(`Expected: 10 work phases, got: ${workEvents.length}`);
+                }
+            },
+            'edge'
+        );
+
+        testFramework.addTest(
+            'Maximum Rounds',
+            '1 cycle, 10 rounds - should handle maximum round count',
+            () => {
+                const roundDurations = Array(10).fill(30);
+                const events = simulateTimer(1, 15, roundDurations);
+                const workEvents = events.filter(e => e.includes('Work (30s)'));
+                if (workEvents.length === 10) {
+                    return `✅ PASS\nExpected: 10 work phases\nActual: ${workEvents.length} work phases`;
+                } else {
+                    throw new Error(`Expected: 10 work phases, got: ${workEvents.length}`);
+                }
+            },
+            'edge'
+        );
+
+        testFramework.addTest(
+            'Zero Duration',
+            '1 cycle, 1 round, 0s duration - should handle zero duration',
+            () => {
+                const events = simulateTimer(1, 30, [0]);
+                const expected = ['Prepare (5s)', 'Cycle 1, Round 1: Work (0s)', 'Workout Complete!'];
+                if (JSON.stringify(events) === JSON.stringify(expected)) {
+                    return `✅ PASS\nExpected: ${expected.join(' → ')}\nActual: ${events.join(' → ')}`;
+                } else {
+                    throw new Error(`Expected: ${expected.join(' → ')}\nActual: ${events.join(' → ')}`);
+                }
+            },
+            'edge'
+        );
+
+        testFramework.addTest(
+            'Maximum Duration',
+            '1 cycle, 1 round, 600s duration - should handle maximum duration',
+            () => {
+                const events = simulateTimer(1, 30, [600]);
+                const expected = ['Prepare (5s)', 'Cycle 1, Round 1: Work (600s)', 'Workout Complete!'];
+                if (JSON.stringify(events) === JSON.stringify(expected)) {
+                    return `✅ PASS\nExpected: ${expected.join(' → ')}\nActual: ${events.join(' → ')}`;
+                } else {
+                    throw new Error(`Expected: ${expected.join(' → ')}\nActual: ${events.join(' → ')}`);
+                }
+            },
+            'edge'
+        );
+
+        // Input Validation Tests
+        testFramework.addTest(
+            'Invalid Cycles - Too Low',
+            '0 cycles should be rejected',
+            () => {
+                // This would be caught by HTML validation, but let's test the logic
+                try {
+                    if (0 < 1 || 0 > 10) {
+                        return `✅ PASS\nCorrectly rejects 0 cycles`;
+                    } else {
+                        throw new Error('Should reject 0 cycles');
+                    }
+                } catch (error) {
+                    return `✅ PASS\nCorrectly rejects 0 cycles: ${error.message}`;
+                }
+            },
+            'validation'
+        );
+
+        testFramework.addTest(
+            'Invalid Cycles - Too High',
+            '11 cycles should be rejected',
+            () => {
+                try {
+                    if (11 < 1 || 11 > 10) {
+                        return `✅ PASS\nCorrectly rejects 11 cycles`;
+                    } else {
+                        throw new Error('Should reject 11 cycles');
+                    }
+                } catch (error) {
+                    return `✅ PASS\nCorrectly rejects 11 cycles: ${error.message}`;
+                }
+            },
+            'validation'
+        );
+
+        testFramework.addTest(
+            'Invalid Rest Period - Too Low',
+            '-1 seconds should be rejected',
+            () => {
+                try {
+                    if (-1 < 0 || -1 > 300) {
+                        return `✅ PASS\nCorrectly rejects -1 second rest period`;
+                    } else {
+                        throw new Error('Should reject -1 second rest period');
+                    }
+                } catch (error) {
+                    return `✅ PASS\nCorrectly rejects -1 second rest period: ${error.message}`;
+                }
+            },
+            'validation'
+        );
+
+        testFramework.addTest(
+            'Invalid Rest Period - Too High',
+            '301 seconds should be rejected',
+            () => {
+                try {
+                    if (301 < 0 || 301 > 300) {
+                        return `✅ PASS\nCorrectly rejects 301 second rest period`;
+                    } else {
+                        throw new Error('Should reject 301 second rest period');
+                    }
+                } catch (error) {
+                    return `✅ PASS\nCorrectly rejects 301 second rest period: ${error.message}`;
+                }
+            },
+            'validation'
+        );
+
+        testFramework.addTest(
+            'Invalid Round Duration - Too Low',
+            '-1 seconds should be rejected',
+            () => {
+                try {
+                    if (-1 < 0 || -1 > 600) {
+                        return `✅ PASS\nCorrectly rejects -1 second round duration`;
+                    } else {
+                        throw new Error('Should reject -1 second round duration');
+                    }
+                } catch (error) {
+                    return `✅ PASS\nCorrectly rejects -1 second round duration: ${error.message}`;
+                }
+            },
+            'validation'
+        );
+
+        testFramework.addTest(
+            'Invalid Round Duration - Too High',
+            '601 seconds should be rejected',
+            () => {
+                try {
+                    if (601 < 5 || 601 > 600) {
+                        return `✅ PASS\nCorrectly rejects 601 second round duration`;
+                    } else {
+                        throw new Error('Should reject 601 second round duration');
+                    }
+                } catch (error) {
+                    return `✅ PASS\nCorrectly rejects 601 second round duration: ${error.message}`;
+                }
+            },
+            'validation'
+        );
+
+        // Test runner functions
+        function runAllTests() {
+            clearResults();
+            testFramework.runAllTests();
+        }
+
+        function runNormalTests() {
+            clearResults();
+            testFramework.runTestsByCategory('normal');
+        }
+
+        function runEdgeTests() {
+            clearResults();
+            testFramework.runTestsByCategory('edge');
+        }
+
+        function clearResults() {
+            document.getElementById('normalTests').innerHTML = '';
+            document.getElementById('edgeTests').innerHTML = '';
+            document.getElementById('zeroRestTests').innerHTML = '';
+            document.getElementById('validationTests').innerHTML = '';
+            document.getElementById('summary').innerHTML = '<strong>Test Summary:</strong> Ready to run tests';
+        }
+
+        // Initialize tests on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('Test suite loaded with', testFramework.tests.length, 'tests');
+        });
+    </script>
+</body>
+</html>

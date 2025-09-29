@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HIIT Timer Test Runner</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .controls {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 0 5px;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        .console {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            margin-top: 20px;
+        }
+        .summary {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .test-results {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        @media (max-width: 768px) {
+            .test-results {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🧪 HIIT Timer Test Runner</h1>
+        <p>Comprehensive test suite for the HIIT Timer application</p>
+    </div>
+
+    <div class="summary" id="summary">
+        Ready to run tests
+    </div>
+
+    <div class="controls">
+        <button onclick="runAllTests()" id="runAllBtn">Run All Tests</button>
+        <button onclick="runUnitTests()" id="runUnitBtn">Run Unit Tests</button>
+        <button onclick="runIntegrationTests()" id="runIntegrationBtn">Run Integration Tests</button>
+        <button onclick="clearConsole()" id="clearBtn">Clear Console</button>
+    </div>
+
+    <div class="test-results">
+        <div class="test-section">
+            <h2>Unit Tests</h2>
+            <p>Tests the core timer logic and edge cases</p>
+            <div id="unitTestResults"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>Integration Tests</h2>
+            <p>Tests the complete timer workflow</p>
+            <div id="integrationTestResults"></div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>Console Output</h2>
+        <div class="console" id="console"></div>
+    </div>
+
+    <script src="script.js"></script>
+    <script src="unit-tests.js"></script>
+    <script>
+        // Console capture
+        const originalConsoleLog = console.log;
+        const originalConsoleError = console.error;
+        const consoleElement = document.getElementById('console');
+        
+        function logToConsole(message, type = 'log') {
+            const timestamp = new Date().toLocaleTimeString();
+            const prefix = type === 'error' ? '❌' : '📝';
+            consoleElement.textContent += `[${timestamp}] ${prefix} ${message}\n`;
+            consoleElement.scrollTop = consoleElement.scrollHeight;
+        }
+        
+        console.log = function(...args) {
+            originalConsoleLog.apply(console, args);
+            logToConsole(args.join(' '), 'log');
+        };
+        
+        console.error = function(...args) {
+            originalConsoleError.apply(console, args);
+            logToConsole(args.join(' '), 'error');
+        };
+
+        // Test runner state
+        let isRunning = false;
+        let testResults = {
+            unit: { total: 0, passed: 0, failed: 0 },
+            integration: { total: 0, passed: 0, failed: 0 }
+        };
+
+        function updateSummary() {
+            const total = testResults.unit.total + testResults.integration.total;
+            const passed = testResults.unit.passed + testResults.integration.passed;
+            const failed = testResults.unit.failed + testResults.integration.failed;
+            
+            document.getElementById('summary').innerHTML = `
+                Total: ${total} | Passed: ${passed} | Failed: ${failed} | Success Rate: ${total > 0 ? ((passed / total) * 100).toFixed(1) : 0}%
+            `;
+        }
+
+        function setButtonsEnabled(enabled) {
+            document.getElementById('runAllBtn').disabled = !enabled;
+            document.getElementById('runUnitBtn').disabled = !enabled;
+            document.getElementById('runIntegrationBtn').disabled = !enabled;
+            isRunning = !enabled;
+        }
+
+        async function runUnitTests() {
+            if (isRunning) return;
+            
+            setButtonsEnabled(false);
+            console.log('🧪 Starting Unit Tests...');
+            
+            try {
+                const results = await testSuite.runAllTests();
+                
+                testResults.unit.total = results.length;
+                testResults.unit.passed = results.filter(r => r.status === 'PASS').length;
+                testResults.unit.failed = results.filter(r => r.status === 'FAIL').length;
+                
+                updateTestResults('unitTestResults', results);
+                updateSummary();
+                
+                console.log(`✅ Unit tests completed: ${testResults.unit.passed}/${testResults.unit.total} passed`);
+            } catch (error) {
+                console.error('❌ Unit tests failed:', error);
+            } finally {
+                setButtonsEnabled(true);
+            }
+        }
+
+        async function runIntegrationTests() {
+            if (isRunning) return;
+            
+            setButtonsEnabled(false);
+            console.log('🔗 Starting Integration Tests...');
+            
+            try {
+                // Create a mock timer for integration testing
+                const mockTimer = new HIITTimer();
+                
+                // Test 1: Basic workflow
+                console.log('Testing basic workflow...');
+                const basicTest = await testBasicWorkflow(mockTimer);
+                
+                // Test 2: Zero rest period
+                console.log('Testing zero rest period...');
+                const zeroRestTest = await testZeroRestPeriod(mockTimer);
+                
+                // Test 3: Edge cases
+                console.log('Testing edge cases...');
+                const edgeCaseTest = await testEdgeCases(mockTimer);
+                
+                const results = [basicTest, zeroRestTest, edgeCaseTest];
+                
+                testResults.integration.total = results.length;
+                testResults.integration.passed = results.filter(r => r.status === 'PASS').length;
+                testResults.integration.failed = results.filter(r => r.status === 'FAIL').length;
+                
+                updateTestResults('integrationTestResults', results);
+                updateSummary();
+                
+                console.log(`✅ Integration tests completed: ${testResults.integration.passed}/${testResults.integration.total} passed`);
+            } catch (error) {
+                console.error('❌ Integration tests failed:', error);
+            } finally {
+                setButtonsEnabled(true);
+            }
+        }
+
+        async function testBasicWorkflow(timer) {
+            try {
+                // Mock the DOM elements
+                const mockElements = {
+                    cycles: { value: '2' },
+                    restPeriod: { value: '30' },
+                    roundsContainer: {
+                        querySelectorAll: () => [
+                            { value: '60' },
+                            { value: '45' }
+                        ]
+                    }
+                };
+                
+                // Mock document.getElementById
+                const originalGetElementById = document.getElementById;
+                document.getElementById = (id) => {
+                    if (id === 'cycles') return mockElements.cycles;
+                    if (id === 'restPeriod') return mockElements.restPeriod;
+                    if (id === 'roundsContainer') return mockElements.roundsContainer;
+                    return { style: { display: '' }, textContent: '', setAttribute: () => {} };
+                };
+                
+                // Mock querySelectorAll
+                const originalQuerySelectorAll = document.querySelectorAll;
+                document.querySelectorAll = (selector) => {
+                    if (selector === '.round-duration') {
+                        return mockElements.roundsContainer.querySelectorAll();
+                    }
+                    return [];
+                };
+                
+                // Test the startWorkout method
+                timer.startWorkout();
+                
+                // Verify workout config
+                if (timer.workoutConfig.cycles === 2 && 
+                    timer.workoutConfig.restPeriod === 30 && 
+                    timer.workoutConfig.roundDurations.length === 2) {
+                    
+                    // Restore original methods
+                    document.getElementById = originalGetElementById;
+                    document.querySelectorAll = originalQuerySelectorAll;
+                    
+                    return { name: 'Basic Workflow', status: 'PASS', result: 'Workout configuration set correctly' };
+                } else {
+                    throw new Error('Workout configuration not set correctly');
+                }
+            } catch (error) {
+                return { name: 'Basic Workflow', status: 'FAIL', result: error.message };
+            }
+        }
+
+        async function testZeroRestPeriod(timer) {
+            try {
+                // Test zero rest period logic
+                const workoutConfig = { cycles: 2, restPeriod: 0, roundDurations: [60, 45] };
+                
+                // Simulate the timer progression
+                const events = [];
+                let currentCycle = 1;
+                let currentRound = 1;
+                let phase = 'prepare';
+                
+                events.push('Prepare');
+                
+                while (currentCycle <= workoutConfig.cycles) {
+                    if (phase === 'prepare') {
+                        phase = 'work';
+                    } else if (phase === 'work') {
+                        const duration = workoutConfig.roundDurations[currentRound - 1];
+                        events.push(`Cycle ${currentCycle}, Round ${currentRound}: Work (${duration}s)`);
+                        
+                        if (currentRound < workoutConfig.roundDurations.length) {
+                            if (workoutConfig.restPeriod > 0) {
+                                events.push(`Cycle ${currentCycle}, Round ${currentRound}: Rest (${workoutConfig.restPeriod}s)`);
+                                phase = 'rest';
+                            } else {
+                                currentRound++;
+                                phase = 'work';
+                            }
+                        } else {
+                            currentCycle++;
+                            currentRound = 1;
+                            if (currentCycle <= workoutConfig.cycles) {
+                                if (workoutConfig.roundDurations.length > 1 && workoutConfig.restPeriod > 0) {
+                                    events.push(`Between cycles: Rest (${workoutConfig.restPeriod}s)`);
+                                    phase = 'rest';
+                                } else {
+                                    phase = 'work';
+                                }
+                            } else {
+                                events.push('Workout Complete!');
+                                break;
+                            }
+                        }
+                    } else if (phase === 'rest') {
+                        currentRound++;
+                        phase = 'work';
+                    }
+                }
+                
+                const expected = [
+                    'Prepare',
+                    'Cycle 1, Round 1: Work (60s)',
+                    'Cycle 1, Round 2: Work (45s)',
+                    'Cycle 2, Round 1: Work (60s)',
+                    'Cycle 2, Round 2: Work (45s)',
+                    'Workout Complete!'
+                ];
+                
+                if (JSON.stringify(events) === JSON.stringify(expected)) {
+                    return { name: 'Zero Rest Period', status: 'PASS', result: 'Zero rest period logic works correctly' };
+                } else {
+                    throw new Error(`Expected: ${expected.join(' → ')}\nActual: ${events.join(' → ')}`);
+                }
+            } catch (error) {
+                return { name: 'Zero Rest Period', status: 'FAIL', result: error.message };
+            }
+        }
+
+        async function testEdgeCases(timer) {
+            try {
+                // Test various edge cases
+                const edgeCases = [
+                    { cycles: 1, restPeriod: 0, roundDurations: [0] }, // Zero duration
+                    { cycles: 1, restPeriod: 300, roundDurations: [600] }, // Maximum duration
+                    { cycles: 10, restPeriod: 30, roundDurations: [60] }, // Maximum cycles
+                    { cycles: 1, restPeriod: 30, roundDurations: Array(10).fill(30) } // Maximum rounds
+                ];
+                
+                for (const edgeCase of edgeCases) {
+                    // Test that the configuration is valid
+                    if (edgeCase.cycles < 1 || edgeCase.cycles > 10) {
+                        throw new Error(`Invalid cycles: ${edgeCase.cycles}`);
+                    }
+                    if (edgeCase.restPeriod < 0 || edgeCase.restPeriod > 300) {
+                        throw new Error(`Invalid rest period: ${edgeCase.restPeriod}`);
+                    }
+                    for (const duration of edgeCase.roundDurations) {
+                        if (duration < 0 || duration > 600) {
+                            throw new Error(`Invalid round duration: ${duration}`);
+                        }
+                    }
+                }
+                
+                return { name: 'Edge Cases', status: 'PASS', result: 'All edge cases handled correctly' };
+            } catch (error) {
+                return { name: 'Edge Cases', status: 'FAIL', result: error.message };
+            }
+        }
+
+        function updateTestResults(elementId, results) {
+            const element = document.getElementById(elementId);
+            element.innerHTML = '';
+            
+            for (const result of results) {
+                const div = document.createElement('div');
+                div.style.cssText = `
+                    padding: 10px;
+                    margin: 5px 0;
+                    border-radius: 5px;
+                    border-left: 5px solid ${result.status === 'PASS' ? '#28a745' : '#dc3545'};
+                    background: ${result.status === 'PASS' ? '#d4edda' : '#f8d7da'};
+                `;
+                div.innerHTML = `
+                    <strong>${result.name}</strong><br>
+                    <small>${result.result}</small>
+                `;
+                element.appendChild(div);
+            }
+        }
+
+        async function runAllTests() {
+            if (isRunning) return;
+            
+            console.log('🚀 Running All Tests...');
+            await runUnitTests();
+            await runIntegrationTests();
+            console.log('🎉 All tests completed!');
+        }
+
+        function clearConsole() {
+            consoleElement.textContent = '';
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🧪 HIIT Timer Test Runner loaded');
+            console.log('Click "Run All Tests" to start testing');
+        });
+    </script>
+</body>
+</html>

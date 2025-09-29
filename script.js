@@ -154,10 +154,28 @@ class HIITTimer {
         const restPeriod = parseInt(document.getElementById('restPeriod').value);
         const roundDurations = Array.from(document.querySelectorAll('.round-duration'))
             .map(input => parseInt(input.value))
-            .filter(duration => duration > 0);
+            .filter(duration => duration >= 0); // Keep all non-negative durations for validation
+        
+        // Input validation
+        if (cycles < 1 || cycles > 10) {
+            alert('Number of cycles must be between 1 and 10');
+            return;
+        }
+        
+        if (restPeriod < 0 || restPeriod > 300) {
+            alert('Rest period must be between 0 and 300 seconds');
+            return;
+        }
         
         if (roundDurations.length === 0) {
             alert('Please add at least one round duration');
+            return;
+        }
+        
+        // Check for invalid round durations
+        const invalidRounds = roundDurations.filter(duration => duration < 0 || duration > 600);
+        if (invalidRounds.length > 0) {
+            alert('All round durations must be between 0 and 600 seconds');
             return;
         }
         
@@ -222,7 +240,13 @@ class HIITTimer {
             this.startWorkPhase();
         } else if (this.currentPhase === 'work') {
             if (this.currentRound < this.workoutConfig.roundDurations.length) {
-                this.startRestPhase();
+                // Only rest if rest period is greater than 0
+                if (this.workoutConfig.restPeriod > 0) {
+                    this.startRestPhase();
+                } else {
+                    this.currentRound++;
+                    this.startWorkPhase();
+                }
             } else {
                 this.nextCycle();
             }
@@ -233,6 +257,12 @@ class HIITTimer {
     }
     
     startWorkPhase() {
+        // Safety check to prevent array index out of bounds
+        if (this.currentRound < 1 || this.currentRound > this.workoutConfig.roundDurations.length) {
+            console.error('Invalid round number:', this.currentRound);
+            this.completeWorkout();
+            return;
+        }
         const duration = this.workoutConfig.roundDurations[this.currentRound - 1];
         this.startPhase('work', duration);
     }
@@ -245,7 +275,12 @@ class HIITTimer {
         if (this.currentCycle < this.workoutConfig.cycles) {
             this.currentCycle++;
             this.currentRound = 1;
-            this.startRestPhase(); // Rest between cycles
+            // Only rest between cycles if there are multiple rounds AND rest period > 0
+            if (this.workoutConfig.roundDurations.length > 1 && this.workoutConfig.restPeriod > 0) {
+                this.startRestPhase(); // Rest between cycles
+            } else {
+                this.startWorkPhase(); // Go directly to next cycle's work
+            }
         } else {
             this.completeWorkout();
         }
@@ -297,9 +332,9 @@ class HIITTimer {
         }
         
         // Update progress bar
-        const progress = ((this.totalTime - this.currentTime) / this.totalTime) * 100;
-        document.getElementById('progressFill').style.width = `${progress}%`;
-        progressBar.setAttribute('aria-valuenow', Math.round(progress));
+        const progress = this.totalTime > 0 ? ((this.totalTime - this.currentTime) / this.totalTime) * 100 : 0;
+        document.getElementById('progressFill').style.width = `${Math.max(0, Math.min(100, progress))}%`;
+        progressBar.setAttribute('aria-valuenow', Math.round(Math.max(0, Math.min(100, progress))));
     }
     
     pauseTimer() {
@@ -387,7 +422,7 @@ function addRound() {
     const roundInput = document.createElement('div');
     roundInput.className = 'round-input';
     roundInput.innerHTML = `
-        <input type="number" class="round-duration" min="5" max="600" value="30" placeholder="Duration" aria-label="Round ${roundCount} duration in seconds">
+        <input type="number" class="round-duration" min="0" max="600" value="30" placeholder="Duration" aria-label="Round ${roundCount} duration in seconds">
         <button type="button" class="remove-round" onclick="removeRound(this)" aria-label="Remove round ${roundCount}">×</button>
     `;
     container.appendChild(roundInput);

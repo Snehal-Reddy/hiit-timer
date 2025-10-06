@@ -251,8 +251,15 @@ class HIITTimer {
                 this.nextCycle();
             }
         } else if (this.currentPhase === 'rest') {
-            this.currentRound++;
-            this.startWorkPhase();
+            // Check if this is a rest between cycles or between rounds
+            if (this.currentRound === 1) {
+                // This is rest between cycles, don't increment round
+                this.startWorkPhase();
+            } else {
+                // This is rest between rounds, increment round
+                this.currentRound++;
+                this.startWorkPhase();
+            }
         }
     }
     

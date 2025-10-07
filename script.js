@@ -10,6 +10,7 @@ class HIITTimer {
         this.workoutConfig = null;
         this.intervalId = null;
         this.audioContext = null;
+        this.isRestBetweenCycles = false; // Flag to track rest between cycles
         
         this.initializeAudio();
     }
@@ -251,9 +252,9 @@ class HIITTimer {
                 this.nextCycle();
             }
         } else if (this.currentPhase === 'rest') {
-            // Check if this is a rest between cycles or between rounds
-            if (this.currentRound === 1) {
+            if (this.isRestBetweenCycles) {
                 // This is rest between cycles, don't increment round
+                this.isRestBetweenCycles = false;
                 this.startWorkPhase();
             } else {
                 // This is rest between rounds, increment round
@@ -284,6 +285,7 @@ class HIITTimer {
             this.currentRound = 1;
             // Only rest between cycles if there are multiple rounds AND rest period > 0
             if (this.workoutConfig.roundDurations.length > 1 && this.workoutConfig.restPeriod > 0) {
+                this.isRestBetweenCycles = true; // Mark this as rest between cycles
                 this.startRestPhase(); // Rest between cycles
             } else {
                 this.startWorkPhase(); // Go directly to next cycle's work
@@ -366,6 +368,7 @@ class HIITTimer {
         this.currentCycle = 1;
         this.currentRound = 1;
         this.currentPhase = 'prepare';
+        this.isRestBetweenCycles = false;
         
         // Reset display
         document.getElementById('timeDisplay').textContent = '00:00';
